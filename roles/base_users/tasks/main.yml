@@ -1,0 +1,58 @@
+---
+- name: Install sudo and bash (login shell + sudoers.d support)
+  community.general.pkgng:
+    name: [sudo, bash]
+    state: present
+
+- name: Create the ssh access groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  loop: [sshusers, fido2users]
+
+- name: Create the admin and deploy users (additive group membership)
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: [wheel, sshusers]
+    append: true
+    shell: "{{ base_users_bash_shell }}"
+    create_home: true
+  loop:
+    - "{{ admin_user }}"
+    - "{{ deploy_user }}"
+
+- name: Install authorized_keys from the repo's public keys (additive, never exclusive)
+  ansible.posix.authorized_key:
+    user: "{{ item.0 }}"
+    key: "{{ lookup('file', item.1) }}"
+    state: present
+    exclusive: false
+  loop: "{{ [admin_user, deploy_user] | product(query('fileglob', base_users_ssh_dir ~ '/*.pub')) | list }}"
+  loop_control:
+    label: "{{ item.0 }} <- {{ item.1 | basename }}"
+  when: query('fileglob', base_users_ssh_dir ~ '/*.pub') | length > 0
+
+- name: Ensure sudoers includes the drop-in dir
+  ansible.builtin.lineinfile:
+    path: /usr/local/etc/sudoers
+    line: "@includedir /usr/local/etc/sudoers.d"
+    state: present
+    validate: "/usr/local/sbin/visudo -cf %s"
+
+- name: Grant the deploy user passwordless sudo
+  ansible.builtin.copy:
+    dest: "/usr/local/etc/sudoers.d/10-{{ deploy_user }}"
+    content: "{{ deploy_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: wheel
+    mode: "0440"
+    validate: "/usr/local/sbin/visudo -cf %s"
+
+- name: Grant the admin user sudo
+  ansible.builtin.copy:
+    dest: "/usr/local/etc/sudoers.d/10-{{ admin_user }}"
+    content: "{{ admin_user }} ALL=(ALL) {{ 'NOPASSWD:ALL' if admin_sudo_nopasswd else 'ALL' }}\n"
+    owner: root
+    group: wheel
+    mode: "0440"
+    validate: "/usr/local/sbin/visudo -cf %s"

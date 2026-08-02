@@ -1,0 +1,23 @@
+---
+management_cidrs: ["10.0.0.0/8"]
+ssh_port: 22
+firewall_allow_tcp: []
+firewall_allow_tcp_mgmt: ["{{ ssh_port }}"]
+firewall_allow_udp: []
+firewall_allow_udp_mgmt: []
+firewall_service_cidrs: []
+firewall_allow_tcp_svc: []
+firewall_allow_udp_svc: []
+firewall_trust_iifnames: []        # FreeBSD NIC names: vtnet0/em0/igb0/wg0/tailscale0
+firewall_forward_policy: drop
+os_base_timezone: Etc/UTC
+admin_user: acid
+deploy_user: ansible
+base_packages: [vim, git, tmux, curl, bash, htop, rsync, jq]
+git_user_name: "ops"
+git_user_email: "ops@example.com"
+ntp_servers: ["0.pool.ntp.org", "1.pool.ntp.org"]
+target_users:
+  # group is optional; defaults to name (user-private group). root needs wheel on FreeBSD.
+  - { name: root, home: /root, group: wheel }
+  - { name: "{{ admin_user }}", home: "/home/{{ admin_user }}", group: "{{ admin_user }}" }

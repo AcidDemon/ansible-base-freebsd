@@ -1,0 +1,21 @@
+---
+base_firewall_enabled: true
+base_firewall_table: base_filter          # contract parity only, unused on pf
+base_firewall_require_mgmt_cidrs: true
+# Contract vars set by orchestrator group_vars, not this role.
+management_cidrs: []  # noqa: var-naming[no-role-prefix]
+ssh_port: 22  # noqa: var-naming[no-role-prefix]
+firewall_allow_tcp: []  # noqa: var-naming[no-role-prefix]
+firewall_allow_tcp_mgmt: ["{{ ssh_port }}"]  # noqa: var-naming[no-role-prefix]
+firewall_allow_udp: []  # noqa: var-naming[no-role-prefix]
+firewall_allow_udp_mgmt: []  # noqa: var-naming[no-role-prefix]
+firewall_service_cidrs: []  # noqa: var-naming[no-role-prefix]
+firewall_allow_tcp_svc: []  # noqa: var-naming[no-role-prefix]
+firewall_allow_udp_svc: []  # noqa: var-naming[no-role-prefix]
+firewall_trust_iifnames: []  # noqa: var-naming[no-role-prefix]
+firewall_forward_policy: drop  # noqa: var-naming[no-role-prefix]
+# Pre-declared so hardening tools only add/remove entries.
+base_firewall_sibling_tables:
+  - sshguard
+  - crowdsec-blacklists
+  - crowdsec6-blacklists

@@ -1,0 +1,52 @@
+---
+# Callable by consumers as `acidnetworks.base_freebsd.site`. `collections:` scopes the
+# short role names below so they resolve whether installed as a collection or run from roles/.
+#
+# Bootstrap play targets `all`: fresh FreeBSD images ship no python and maybe no pkg, so a
+# raw python-free install must run before fact-gathering.
+- name: Bootstrap a usable Python interpreter
+  hosts: all
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Ensure pkg + python3 are installed
+      ansible.builtin.raw: |
+        if command -v python3 >/dev/null 2>&1; then exit 0; fi
+        ASSUME_ALWAYS_YES=yes pkg bootstrap -y || true
+        ASSUME_ALWAYS_YES=yes pkg install -y python3
+        python3 -c 'import sys; print(sys.version)'
+      register: _py_bootstrap
+      changed_when: false
+      tags: [always]
+
+- name: Apply the FreeBSD baseline
+  hosts: base_hosts
+  become: true
+  gather_facts: true
+  collections:
+    - acidnetworks.base_freebsd
+
+  pre_tasks:
+    - name: Confirm target is FreeBSD
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['os_family'] == 'FreeBSD'
+        fail_msg: >-
+          This playbook targets FreeBSD (os_family 'FreeBSD');
+          detected '{{ ansible_facts['os_family'] }}'.
+        quiet: true
+      tags: [always]
+
+  roles:
+    - os_base
+    - time
+    - base_users
+    - packages
+    - shell
+    - tmux
+    - editor
+    - git
+    - base_sysctl
+    - zfs_be
+    - base_updates
+    - base_firewall

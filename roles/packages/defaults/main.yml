@@ -1,0 +1,2 @@
+---
+base_packages: [vim, git, tmux, curl, bash]  # noqa: var-naming[no-role-prefix]

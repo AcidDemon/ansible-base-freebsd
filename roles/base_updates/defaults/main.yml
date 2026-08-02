@@ -1,0 +1,5 @@
+---
+base_updates_enabled: true
+base_updates_hold_packages: []   # app layers add their runtimes, each gets `pkg lock`
+# min hour dom mon dow
+base_updates_cron: { minute: "0", hour: "4", weekday: "*" }

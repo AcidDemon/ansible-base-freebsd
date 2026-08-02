@@ -1,0 +1,48 @@
+---
+- name: Deploy the unattended-update script
+  ansible.builtin.copy:
+    src: freebsd-auto-update.sh
+    dest: /usr/local/sbin/freebsd-auto-update
+    owner: root
+    group: wheel
+    mode: "0755"
+  when: base_updates_enabled | bool
+
+# periodic.conf is shared. Other layers write it too (e.g. hardening's
+# daily_chkrootkit_enable), so edit per-key with sysrc rather than templating the file.
+- name: Enable native periodic security reporting
+  community.general.sysrc:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    path: /etc/periodic.conf
+  loop:
+    - { name: daily_status_security_enable, value: "YES" }
+    - { name: security_status_pkgaudit_enable, value: "YES" }
+    - { name: security_status_baseaudit_enable, value: "YES" }
+    - { name: daily_status_security_inline, value: "NO" }
+  loop_control:
+    label: "{{ item.name }}"
+  when: base_updates_enabled | bool
+
+- name: Schedule the unattended update run
+  ansible.builtin.cron:
+    name: freebsd-auto-update
+    user: root
+    minute: "{{ base_updates_cron.minute }}"
+    hour: "{{ base_updates_cron.hour }}"
+    weekday: "{{ base_updates_cron.weekday }}"
+    job: "/usr/local/sbin/freebsd-auto-update"
+    state: "{{ 'present' if base_updates_enabled | bool else 'absent' }}"
+
+- name: Lock held packages (never auto-upgraded)
+  community.general.pkgng:
+    name: "{{ base_updates_hold_packages }}"
+    state: present
+  when: base_updates_hold_packages | length > 0
+
+- name: Apply pkg lock on held packages
+  ansible.builtin.command: "pkg lock -y {{ item }}"
+  register: _pkg_lock
+  changed_when: "'already locked' not in _pkg_lock.stdout"
+  loop: "{{ base_updates_hold_packages }}"
+  when: base_updates_hold_packages | length > 0

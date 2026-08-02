@@ -1,0 +1,141 @@
+# .bashrc
+
+if [ -f /etc/bashrc ]; then
+    . /etc/bashrc
+fi
+
+if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]; then
+    PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+fi
+export PATH
+
+# Editor/Pager defaults
+if command -v nvim >/dev/null 2>&1; then
+    export EDITOR=nvim VISUAL=nvim
+elif command -v vim >/dev/null 2>&1; then
+    export EDITOR=vim VISUAL=vim
+else
+    export EDITOR=vi VISUAL=vi
+fi
+
+export PAGER=less
+export LESS='-RFX'
+
+# --- History ---
+shopt -s histappend cmdhist
+export HISTCONTROL=ignoreboth:erasedups
+export HISTSIZE=50000
+export HISTFILESIZE=200000
+export HISTFILEFORMAT='%F %T '
+PROMPT_COMMAND='history -a; history -n; '"${PROMPT_COMMAND:-:}"
+
+# --- Completion ---
+if [[ -r /usr/local/share/bash-completion/bash_completion.sh ]]; then
+    # shellcheck disable=SC1091
+    source /usr/local/share/bash-completion/bash_completion.sh
+elif [[ -r /etc/bash_completion ]]; then
+    # shellcheck disable=SC1091
+    source /etc/bash_completion
+fi
+
+# --- Colors (FreeBSD) ---
+export CLICOLOR=1
+alias ls='ls -G'
+alias grep='grep --color=auto'
+
+# User specific aliases and functions
+## Safety
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+alias ll='ls -lah'
+alias la='ls -A'
+alias l='ls -lh'
+alias path='printf "%s\n" "${PATH//:/\n}"'
+alias dfh='df -h'
+alias duh='du -h -d 1'
+alias freeh='top -b -d1 | head -n 5'
+
+alias ports='sockstat -46l'
+alias psg='ps aux | grep -i'
+
+alias c='clear'
+alias h='history'
+alias e='exit'
+
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# Networking helpers (FreeBSD)
+alias ipa='ifconfig'
+alias ipr='netstat -rn'
+alias pingg='ping -c 5 1.1.1.1'
+
+# Sudo convenience
+alias svi='sudo -E ${EDITOR}'
+alias root='sudo -i'
+
+# Small functions
+mkcd() { mkdir -p -- "$1" && cd -- "$1" || return; }
+
+extract() {
+    [[ -f "$1" ]] || {
+        echo "extract: file not found: $1" >&2
+        return 1
+    }
+    case "$1" in
+    *.tar.bz2 | *.tbz2) tar xjf "$1" ;;
+    *.tar.gz | *.tgz) tar xzf "$1" ;;
+    *.tar.xz | *.txz) tar xJf "$1" ;;
+    *.tar) tar xf "$1" ;;
+    *.zip) unzip "$1" ;;
+    *.gz) gunzip "$1" ;;
+    *.bz2) bunzip2 "$1" ;;
+    *.xz) unxz "$1" ;;
+    *)
+        echo "extract: don't know how to extract: $1" >&2
+        return 2
+        ;;
+    esac
+}
+
+_extip_fetch() {
+    local family="$1" url ip
+    shift || true
+
+    command -v curl >/dev/null 2>&1 || {
+        echo "curl not installed" >&2
+        return 1
+    }
+
+    for url in "https://api.ipify.org" "https://icanhazip.com" "https://ifconfig.me/ip"; do
+        ip="$(curl -fsS ${family} --max-time 2 "$url" 2>/dev/null | tr -d '\r\n' || true)"
+        [[ -n "$ip" ]] && {
+            echo "$ip"
+            return 0
+        }
+    done
+    return 1
+}
+
+extip4() { _extip_fetch -4; }
+extip6() { _extip_fetch -6; }
+
+extip() {
+    local v4 v6
+    v4="$(extip4 2>/dev/null || true)"
+    v6="$(extip6 2>/dev/null || true)"
+
+    [[ -n "$v4" ]] && echo "IPv4: $v4"
+    [[ -n "$v6" ]] && echo "IPv6: $v6"
+
+    [[ -n "$v4$v6" ]] || return 1
+}
+
+# Auto attach tmux on interactive SSH ($- guard: never hijack non-interactive
+# shells like Ansible become over a PTY)
+if [[ $- == *i* && -n "${SSH_CONNECTION:-}" && -z "${TMUX:-}" && -t 1 ]] && command -v tmux >/dev/null 2>&1; then
+    [[ -n "${NO_TMUX:-}" ]] || exec tmux new -A -s main
+fi

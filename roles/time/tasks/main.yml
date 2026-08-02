@@ -1,0 +1,25 @@
+---
+- name: Install chrony
+  community.general.pkgng:
+    name: chrony
+    state: present
+
+- name: Deploy chrony.conf
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /usr/local/etc/chrony.conf
+    owner: root
+    group: wheel
+    mode: "0644"
+    backup: true
+  notify: Restart chronyd
+
+- name: Enable chronyd in rc.conf
+  community.general.sysrc:
+    name: chronyd_enable
+    value: "YES"
+
+- name: Ensure chronyd is running
+  ansible.builtin.service:
+    name: chronyd
+    state: started

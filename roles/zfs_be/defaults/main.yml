@@ -1,0 +1,4 @@
+---
+zfs_be_enabled: true
+# BE name prefix. A UTC timestamp is appended at runtime.
+zfs_be_prefix: ansible-preupdate

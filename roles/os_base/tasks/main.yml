@@ -1,0 +1,32 @@
+---
+- name: Confirm target is FreeBSD
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'FreeBSD'
+    fail_msg: >
+      This repo targets FreeBSD; detected
+      {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}.
+    quiet: true
+
+- name: Set the hostname (writes /etc/rc.conf hostname=)
+  ansible.builtin.hostname:
+    name: "{{ os_base_hostname }}"
+  when: os_base_hostname | length > 0
+
+- name: Set the timezone
+  community.general.timezone:
+    name: "{{ os_base_timezone }}"
+
+- name: Install base packages
+  community.general.pkgng:
+    name: "{{ os_base_packages }}"
+    state: present
+
+- name: Manage /etc/hosts
+  ansible.builtin.template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: wheel
+    mode: "0644"
+    backup: true

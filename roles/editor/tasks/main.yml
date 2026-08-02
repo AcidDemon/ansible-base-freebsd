@@ -1,0 +1,17 @@
+---
+- name: Ensure vim is installed
+  community.general.pkgng:
+    name: vim
+    state: present
+
+- name: Deploy .vimrc
+  ansible.builtin.copy:
+    src: vimrc
+    dest: "{{ item.home }}/.vimrc"
+    owner: "{{ item.name }}"
+    group: "{{ item.group | default(item.name) }}"
+    mode: "0644"
+    backup: true
+  loop: "{{ target_users }}"
+  loop_control:
+    label: "{{ item.name }}"

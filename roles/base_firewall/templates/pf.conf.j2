@@ -1,0 +1,68 @@
+# Managed by Ansible. sshguard and crowdsec own only their table contents.
+# Do not hand-edit.
+
+# --- tables ---
+{% if management_cidrs | length > 0 %}
+table <management> const { {{ management_cidrs | join(', ') }} }
+{% endif %}
+{% if firewall_service_cidrs | length > 0 %}
+table <services> const { {{ firewall_service_cidrs | join(', ') }} }
+{% endif %}
+{% for t in base_firewall_sibling_tables %}
+table <{{ t }}> persist
+{% endfor %}
+
+# --- options + normalization ---
+set skip on lo0
+set block-policy drop
+scrub in all fragment reassemble
+
+# --- default deny inbound / allow outbound ---
+block in log all
+pass out all keep state
+
+# forward_policy '{{ firewall_forward_policy }}'. pf filters forwarded packets through
+# these same rules. A routing or container host sets gateway_enable=YES and opens the
+# path via firewall_trust_iifnames or service rules. 'drop' needs nothing extra.
+
+# --- sibling banlists ---
+block in quick from <sshguard>
+block in quick from <crowdsec-blacklists>
+block in quick inet6 from <crowdsec6-blacklists>
+
+# --- trusted inbound interfaces ---
+{% for ifn in firewall_trust_iifnames %}
+pass in quick on {{ ifn }} all
+{% endfor %}
+
+# --- ICMP ---
+pass in inet proto icmp all
+pass in inet6 proto ipv6-icmp all
+
+# --- world-open ports ---
+{% for p in firewall_allow_tcp %}
+pass in proto tcp to any port {{ p }} keep state
+{% endfor %}
+{% for p in firewall_allow_udp %}
+pass in proto udp to any port {{ p }} keep state
+{% endfor %}
+
+# --- management tier ---
+{% if management_cidrs | length > 0 %}
+{% for p in firewall_allow_tcp_mgmt %}
+pass in proto tcp from <management> to any port {{ p }} keep state
+{% endfor %}
+{% for p in firewall_allow_udp_mgmt %}
+pass in proto udp from <management> to any port {{ p }} keep state
+{% endfor %}
+{% endif %}
+
+# --- service tier ---
+{% if firewall_service_cidrs | length > 0 %}
+{% for p in firewall_allow_tcp_svc %}
+pass in proto tcp from <services> to any port {{ p }} keep state
+{% endfor %}
+{% for p in firewall_allow_udp_svc %}
+pass in proto udp from <services> to any port {{ p }} keep state
+{% endfor %}
+{% endif %}

@@ -1,0 +1,95 @@
+---
+- name: Refuse to apply with no management CIDRs (SSH lockout safety)
+  ansible.builtin.assert:
+    that:
+      - management_cidrs | length > 0
+      - firewall_allow_tcp_mgmt | length > 0
+    fail_msg: "management_cidrs or firewall_allow_tcp_mgmt is empty, applying would lock out SSH."
+    quiet: true
+  when:
+    - base_firewall_enabled | bool
+    - base_firewall_require_mgmt_cidrs | bool
+
+- name: Decide whether SSH will be mgmt-restricted (drives the lockout guard)
+  ansible.builtin.set_fact:
+    _fw_ssh_mgmt_only: >-
+      {{ (ssh_port | int in (firewall_allow_tcp_mgmt | map('int') | list))
+         and (ssh_port | int not in (firewall_allow_tcp | map('int') | list)) }}
+  when: base_firewall_enabled | bool
+
+- name: Check the deploy source is inside management_cidrs
+  become: false
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import ipaddress, os, json, sys
+        cidrs = json.loads(sys.argv[1])
+        parts = os.environ.get('SSH_CONNECTION', '').split()
+        src = parts[0] if parts else ''
+        if not src:
+            print('SKIP'); raise SystemExit(0)
+        inside = any(ipaddress.ip_address(src) in ipaddress.ip_network(n, strict=False) for n in cidrs)
+        print('OK' if inside else 'FAIL:' + src)
+      - "{{ management_cidrs | to_json }}"
+  register: _fw_src_check
+  changed_when: false
+  when:
+    - base_firewall_enabled | bool
+    - _fw_ssh_mgmt_only | bool
+
+- name: Assert the deploy source is inside management_cidrs (wrong-source lockout guard)
+  ansible.builtin.assert:
+    that: (_fw_src_check.stdout | default('SKIP')) is not match('^FAIL')
+    fail_msg: >-
+      Deploy source {{ (_fw_src_check.stdout | default('')) | regex_replace('^FAIL:', '') }}
+      is NOT within management_cidrs ({{ management_cidrs | join(', ') }}). Restricting SSH
+      to those CIDRs would strand this session. Deploy from within the management network.
+    success_msg: "Deploy source is within management_cidrs (or local/undeterminable, guard skipped)."
+    quiet: true
+  when:
+    - base_firewall_enabled | bool
+    - _fw_ssh_mgmt_only | bool
+
+- name: Render /etc/pf.conf
+  ansible.builtin.template:
+    src: pf.conf.j2
+    dest: /etc/pf.conf
+    owner: root
+    group: wheel
+    mode: "0644"
+    validate: "pfctl -n -f %s"
+    backup: true
+  when: base_firewall_enabled | bool
+  notify: Reload pf
+
+- name: Enable pf + pflog in rc.conf
+  community.general.sysrc:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+  loop:
+    - { name: pf_enable, value: "YES" }
+    - { name: pflog_enable, value: "YES" }
+  when: base_firewall_enabled | bool
+
+- name: Ensure pflog is running
+  ansible.builtin.service:
+    name: pflog
+    state: started
+  when: base_firewall_enabled | bool
+
+# pf can be enabled in rc.conf yet not loaded in the kernel (never started this boot).
+- name: Detect whether pf is enabled in the kernel
+  ansible.builtin.command: pfctl -s info
+  register: _pf_info
+  changed_when: false
+  failed_when: false
+  when: base_firewall_enabled | bool
+
+- name: Load pf if it is disabled
+  ansible.builtin.command: pfctl -e -f /etc/pf.conf
+  changed_when: true
+  when:
+    - base_firewall_enabled | bool
+    - "'Status: Enabled' not in (_pf_info.stdout | default(''))"

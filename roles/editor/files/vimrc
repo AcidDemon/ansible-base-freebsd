@@ -1,0 +1,31 @@
+" Managed by Ansible
+set nocompatible
+syntax on
+filetype plugin indent on
+
+set number
+set ruler
+set laststatus=2
+set wildmenu
+set showcmd
+
+set expandtab
+set shiftwidth=4
+set softtabstop=4
+set tabstop=4
+set autoindent
+set smartindent
+
+set incsearch
+set hlsearch
+set ignorecase
+set smartcase
+
+set backspace=indent,eol,start
+set hidden
+set scrolloff=3
+set encoding=utf-8
+
+set noswapfile
+set nobackup
+set nowritebackup

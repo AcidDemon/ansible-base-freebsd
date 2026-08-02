@@ -1,0 +1,14 @@
+---
+# No /etc/sysctl.d on FreeBSD. Manage keys in place so base and hardening layers coexist.
+# sysctl_set applies live, the file persists across reboots.
+- name: Apply and persist base sysctls in /etc/sysctl.conf
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.conf
+    sysctl_set: true
+    state: present
+    reload: false
+  loop: "{{ base_sysctl_settings | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"

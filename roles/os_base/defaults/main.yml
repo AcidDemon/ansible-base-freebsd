@@ -1,0 +1,8 @@
+---
+os_base_timezone: Etc/UTC
+os_base_hostname: ""
+os_base_fqdn: ""
+# FreeBSD base ships ssh, cron and so on. These are the pkg additions the baseline needs.
+os_base_packages:
+  - ca_root_nss
+  - curl

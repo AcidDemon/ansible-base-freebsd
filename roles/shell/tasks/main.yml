@@ -1,0 +1,12 @@
+---
+- name: Deploy .bashrc
+  ansible.builtin.copy:
+    src: bashrc
+    dest: "{{ item.home }}/.bashrc"
+    owner: "{{ item.name }}"
+    group: "{{ item.group | default(item.name) }}"
+    mode: "0644"
+    backup: true
+  loop: "{{ target_users }}"
+  loop_control:
+    label: "{{ item.name }}"

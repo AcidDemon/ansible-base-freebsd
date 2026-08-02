@@ -1,0 +1,39 @@
+---
+namespace: acidnetworks
+name: base_freebsd
+version: 0.1.0
+readme: README.md
+authors:
+  - AcidDemon <c.schlueter@acidnetworks.net>
+description: >-
+  FreeBSD baseline layer: OS defaults, users and SSH keys, package baseline,
+  shell/editor/git dotfiles, sysctl, chrony, ZFS boot environments, periodic
+  auto-updates and a pf host firewall.
+license:
+  - MIT
+tags:
+  - freebsd
+  - baseline
+  - system
+repository: https://github.com/AcidDemon/ansible-base-freebsd
+dependencies:
+  community.general: "*"
+  ansible.posix: "*"
+# Ship only roles/ + playbooks/ + README/LICENSE. Everything below is dev scaffolding
+# or secrets and must NOT enter the artifact — especially files/ (committed deploy keys).
+build_ignore:
+  - .ansible
+  - .git
+  - .gitignore
+  - .envrc
+  - .yamllint
+  - ansible.cfg
+  - requirements.yml
+  - site.yml
+  - Vagrantfile
+  - inventory
+  - files
+  - tests
+  - docs
+  - playbooks/roles
+  - "*.tar.gz"

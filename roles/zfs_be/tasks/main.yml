@@ -1,0 +1,25 @@
+---
+- name: Determine root filesystem type
+  ansible.builtin.set_fact:
+    _root_fstype: >-
+      {{ (ansible_facts.mounts | selectattr('mount', 'equalto', '/')
+          | map(attribute='fstype') | first) | default('') }}
+
+- name: ZFS boot environment (zfs root only)
+  when:
+    - zfs_be_enabled | bool
+    - _root_fstype == 'zfs'
+  block:
+    - name: Compose a boot-environment name
+      ansible.builtin.set_fact:
+        _be_name: "{{ zfs_be_prefix }}-{{ ansible_date_time.iso8601_basic_short }}"
+
+    - name: Check whether the BE already exists (idempotent per-run)
+      ansible.builtin.command: "bectl list -H"
+      register: _bectl_list
+      changed_when: false
+
+    - name: Create the pre-update boot environment
+      ansible.builtin.command: "bectl create {{ _be_name }}"
+      when: _be_name not in _bectl_list.stdout
+      changed_when: true

@@ -1,0 +1,5 @@
+::1                     localhost localhost.my.domain
+127.0.0.1               localhost localhost.my.domain
+{% if os_base_hostname | length > 0 %}
+127.0.0.1               {% if os_base_fqdn %}{{ os_base_fqdn }} {% endif %}{{ os_base_hostname }}
+{% endif %}

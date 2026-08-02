@@ -1,0 +1,5 @@
+---
+# Dev entrypoint (not shipped in the collection; see build_ignore in galaxy.yml).
+# The real play lives in playbooks/site.yml so it can ship as acidnetworks.base_freebsd.site.
+- name: Apply the FreeBSD baseline
+  ansible.builtin.import_playbook: playbooks/site.yml

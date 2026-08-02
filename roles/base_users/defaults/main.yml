@@ -1,0 +1,7 @@
+---
+admin_user: acid  # noqa: var-naming[no-role-prefix]
+deploy_user: ansible  # noqa: var-naming[no-role-prefix]
+admin_sudo_nopasswd: false  # noqa: var-naming[no-role-prefix]
+base_users_ssh_dir: "{{ inventory_dir }}/../files/ssh"
+# sudo is a pkg on FreeBSD. base_users installs it for the sudoers.d drop-ins below.
+base_users_bash_shell: /usr/local/bin/bash

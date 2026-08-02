@@ -1,0 +1,34 @@
+---
+- name: Ensure ~/.local/bin exists
+  ansible.builtin.file:
+    path: "{{ item.home }}/.local/bin"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.group | default(item.name) }}"
+    mode: "0755"
+  loop: "{{ target_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Deploy tmux.conf
+  ansible.builtin.copy:
+    src: tmux.conf
+    dest: "{{ item.home }}/.tmux.conf"
+    owner: "{{ item.name }}"
+    group: "{{ item.group | default(item.name) }}"
+    mode: "0644"
+    backup: true
+  loop: "{{ target_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Deploy tmux-status helper
+  ansible.builtin.copy:
+    src: tmux-status.sh
+    dest: "{{ item.home }}/.local/bin/tmux-status"
+    owner: "{{ item.name }}"
+    group: "{{ item.group | default(item.name) }}"
+    mode: "0755"
+  loop: "{{ target_users }}"
+  loop_control:
+    label: "{{ item.name }}"
