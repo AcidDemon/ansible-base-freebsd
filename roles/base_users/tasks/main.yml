@@ -48,7 +48,12 @@
     mode: "0440"
     validate: "/usr/local/sbin/visudo -cf %s"
 
+# Skipped when the two are the same account: both tasks target the same
+# filename, so this one would overwrite the deploy user's NOPASSWD entry and
+# break the automation that depends on it. The deploy grant is the wider of the
+# two, so it is the one to keep.
 - name: Grant the admin user sudo
+  when: admin_user != deploy_user
   ansible.builtin.copy:
     dest: "/usr/local/etc/sudoers.d/10-{{ admin_user }}"
     content: "{{ admin_user }} ALL=(ALL) {{ 'NOPASSWD:ALL' if admin_sudo_nopasswd else 'ALL' }}\n"
