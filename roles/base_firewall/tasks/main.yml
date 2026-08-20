@@ -117,3 +117,17 @@
   when:
     - base_firewall_enabled | bool
     - "'Status: Enabled' not in (_pf_info.stdout | default(''))"
+
+# Enabling pf drops every established connection, including this one: a
+# mid-stream session has no state entry, so its non-SYN packets meet
+# 'block in log all' before any pass rule can create state from them. The
+# control socket survives as a dead master for ControlPersist seconds, and every
+# task until then fails with "Timeout waiting for privilege escalation prompt"
+# pointing at whatever ran next rather than at pf. Dropping the connection here
+# makes the next task open a fresh one.
+#
+# meta ignores conditionals, so this runs even when pf was already enabled and
+# nothing was dropped. Reconnecting costs one SSH handshake; guessing wrong costs
+# the rest of the play.
+- name: Drop the connection pf just invalidated
+  ansible.builtin.meta: reset_connection
