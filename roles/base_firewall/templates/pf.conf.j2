@@ -17,6 +17,14 @@ set skip on lo0
 set block-policy drop
 scrub in all fragment reassemble
 
+{% if firewall_anchors | length > 0 %}
+# --- translation anchors (app layers own the anchor files) ---
+{% for a in firewall_anchors %}
+nat-anchor "{{ a }}/*"
+rdr-anchor "{{ a }}/*"
+{% endfor %}
+
+{% endif %}
 # --- default deny inbound / allow outbound ---
 block in log all
 pass out all keep state
@@ -64,5 +72,17 @@ pass in proto tcp from <services> to any port {{ p }} keep state
 {% endfor %}
 {% for p in firewall_allow_udp_svc %}
 pass in proto udp from <services> to any port {{ p }} keep state
+{% endfor %}
+{% endif %}
+{% if firewall_anchors | length > 0 %}
+
+# --- filter anchors ---
+# Last, so an app layer's pass rules are evaluated after base's own. Anything
+# the anchor does not match still falls through to 'block in log all' above.
+{% for a in firewall_anchors %}
+anchor "{{ a }}/*"
+{% endfor %}
+{% for a in firewall_anchors %}
+load anchor "{{ a }}" from "/etc/pf.anchors/{{ a }}"
 {% endfor %}
 {% endif %}

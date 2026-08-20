@@ -24,3 +24,9 @@ references an app, and never flushes its own tables.
 `firewall_allow_tcp_mgmt` (mgmt-only TCP, default 22), `firewall_trust_iifnames`
 (trusted input ifaces, e.g. `wg0`), `firewall_forward_policy`. base owns `/etc/pf.conf`;
 sshguard and crowdsec own their own pf tables.
+
+For rules this template cannot express (`rdr`, `nat`, per-host filters), declare
+`firewall_anchors: [name]`. base emits the `nat-anchor`/`rdr-anchor`/`anchor` lines plus
+`load anchor "name" from "/etc/pf.anchors/name"`, and creates that file empty if it does
+not exist. The app layer owns its contents; base still never references an app. Filter
+anchors are placed last, so app rules are evaluated after base's own.

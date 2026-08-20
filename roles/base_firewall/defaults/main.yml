@@ -14,6 +14,10 @@ firewall_allow_tcp_svc: []  # noqa: var-naming[no-role-prefix]
 firewall_allow_udp_svc: []  # noqa: var-naming[no-role-prefix]
 firewall_trust_iifnames: []  # noqa: var-naming[no-role-prefix]
 firewall_forward_policy: drop  # noqa: var-naming[no-role-prefix]
+# Anchors are the only way an app layer can add rules this template cannot
+# express (rdr, nat, per-host filters). base still owns pf.conf and never names
+# an app; it just reserves the hook and guarantees the anchor file exists.
+firewall_anchors: []  # noqa: var-naming[no-role-prefix]
 # Pre-declared so hardening tools only add/remove entries.
 base_firewall_sibling_tables:
   - sshguard

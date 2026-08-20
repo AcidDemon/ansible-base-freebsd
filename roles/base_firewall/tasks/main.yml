@@ -52,6 +52,30 @@
     - base_firewall_enabled | bool
     - _fw_ssh_mgmt_only | bool
 
+# pfctl refuses to load a 'load anchor' whose file is missing, and base runs
+# before the app layer that fills it. Create empty, never clobber.
+- name: Ensure the pf anchor dir exists
+  ansible.builtin.file:
+    path: /etc/pf.anchors
+    state: directory
+    owner: root
+    group: wheel
+    mode: "0755"
+  when:
+    - base_firewall_enabled | bool
+    - firewall_anchors | length > 0
+
+- name: Ensure each declared anchor file exists
+  ansible.builtin.copy:
+    dest: "/etc/pf.anchors/{{ item }}"
+    content: ""
+    force: false
+    owner: root
+    group: wheel
+    mode: "0644"
+  loop: "{{ firewall_anchors }}"
+  when: base_firewall_enabled | bool
+
 - name: Render /etc/pf.conf
   ansible.builtin.template:
     src: pf.conf.j2
