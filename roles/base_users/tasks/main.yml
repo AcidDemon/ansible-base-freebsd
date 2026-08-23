@@ -13,6 +13,9 @@
 - name: Create the admin and deploy users (additive group membership)
   ansible.builtin.user:
     name: "{{ item }}"
+    # Unpinned by default: no entry in base_users_uids means the argument is
+    # dropped and pw picks the next free number.
+    uid: "{{ base_users_uids[item] | default(omit) }}"
     groups: [wheel, sshusers]
     append: true
     shell: "{{ base_users_bash_shell }}"
@@ -20,6 +23,8 @@
   loop:
     - "{{ admin_user }}"
     - "{{ deploy_user }}"
+  loop_control:
+    label: "{{ item }}{{ ' uid=' ~ base_users_uids[item] if item in base_users_uids else '' }}"
 
 - name: Install authorized_keys from the repo's public keys (additive, never exclusive)
   ansible.posix.authorized_key:

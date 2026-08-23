@@ -3,5 +3,18 @@ admin_user: acid  # noqa: var-naming[no-role-prefix]
 deploy_user: ansible  # noqa: var-naming[no-role-prefix]
 admin_sudo_nopasswd: false  # noqa: var-naming[no-role-prefix]
 base_users_ssh_dir: "{{ inventory_dir }}/../files/ssh"
+
+# Optional uid pins, keyed by username. A name with no entry keeps whatever pw
+# hands out, which is the right default: on a single host the number does not
+# matter. Pin one when it has to agree across hosts - shared storage, or
+# rsync -a --numeric-ids between them - or when some other range on the host is
+# already spoken for and you want the automation account clear of it.
+#
+# Changing the pin for an account that already exists rewrites its uid and the
+# ownership of its home, so choose before the first run rather than after.
+#
+#   base_users_uids:
+#     ansible: 2000
+base_users_uids: {}
 # sudo is a pkg on FreeBSD. base_users installs it for the sudoers.d drop-ins below.
 base_users_bash_shell: /usr/local/bin/bash
