@@ -20,8 +20,40 @@
     - { name: security_status_pkgaudit_enable, value: "YES" }
     - { name: security_status_baseaudit_enable, value: "YES" }
     - { name: daily_status_security_inline, value: "NO" }
+    # periodic(8) defines exit 0 as "produced nothing notable" and is built to
+    # mask it, but the default prints it anyway - so a base security check that
+    # found nothing contributes a heading with no body, which reads as a check
+    # that broke rather than one that passed. 999.clean-note says it in words.
+    - { name: security_show_success, value: "NO" }
+    # Not daily_show_success: the daily run's exit-0 scripts include df -h,
+    # zpool list and netstat -i, which are worth reading. Only these three
+    # cleaners are noise - vi recovery files, msgs(1) announcements and rwhod
+    # are all vestigial, and each prints a bare heading every night.
+    - { name: daily_clean_preserve_enable, value: "NO" }
+    - { name: daily_clean_msgs_enable, value: "NO" }
+    - { name: daily_clean_rwho_enable, value: "NO" }
   loop_control:
     label: "{{ item.name }}"
+  when: base_updates_enabled | bool
+
+# Not left to a later layer: base runs first, and the drop-in below has to land
+# somewhere that already exists.
+- name: Ensure the local periodic/security dir exists
+  ansible.builtin.file:
+    path: /usr/local/etc/periodic/security
+    state: directory
+    owner: root
+    group: wheel
+    mode: "0755"
+  when: base_updates_enabled | bool
+
+- name: Deploy the periodic security footer
+  ansible.builtin.copy:
+    src: 999.clean-note
+    dest: /usr/local/etc/periodic/security/999.clean-note
+    owner: root
+    group: wheel
+    mode: "0755"
   when: base_updates_enabled | bool
 
 - name: Schedule the unattended update run

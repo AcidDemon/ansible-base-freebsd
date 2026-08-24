@@ -1,0 +1,11 @@
+#!/bin/sh
+# Managed by Ansible
+#
+# periodic.conf sets security_show_success=NO, so a check that found nothing
+# contributes no output at all. Without this line an all-clean mail cannot be
+# told apart from a run whose checks never fired. Sorting last (periodic(8)
+# orders the union of its directories by basename) puts it under everything.
+echo ""
+echo "Every enabled periodic security check not listed above ran and found nothing to report."
+# 1 = "notable information", so this line is never masked by show_success itself.
+exit 1

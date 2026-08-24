@@ -30,3 +30,20 @@ For rules this template cannot express (`rdr`, `nat`, per-host filters), declare
 `load anchor "name" from "/etc/pf.anchors/name"`, and creates that file empty if it does
 not exist. The app layer owns its contents; base still never references an app. Filter
 anchors are placed last, so app rules are evaluated after base's own.
+
+## Nightly reports
+`base_updates` owns the `periodic.conf` keys that decide what reaches your inbox. It sets
+`security_show_success=NO`, so a security check that found nothing prints nothing at all.
+That is what `periodic(8)` intends by exit status 0, and it is why the default setting
+produces headings with no body. `999.clean-note` runs last and closes the mail with one
+line saying the checks not listed above came back clean.
+
+A drop-in of your own in `/usr/local/etc/periodic/security` must therefore exit 1 when it
+has routine output worth reading, or 3 when it found something that must not be masked.
+Exit 0 means "nothing to say" and will be swallowed.
+
+The daily run keeps `daily_show_success` at its default, because its exit-0 scripts print
+`df -h`, `zpool list` and `netstat -i`. Only `daily_clean_preserve_enable`,
+`daily_clean_msgs_enable` and `daily_clean_rwho_enable` are turned off: vi recovery files,
+`msgs(1)` announcements and `rwhod` are unused on a modern box, and each one printed a
+heading and nothing else every night.
