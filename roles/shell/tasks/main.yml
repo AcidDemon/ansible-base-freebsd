@@ -10,3 +10,17 @@
   loop: "{{ target_users }}"
   loop_control:
     label: "{{ item.name }}"
+
+# Without this, .bashrc is dead weight: bash reads it only for interactive
+# non-login shells, and an ssh session is a login shell.
+- name: Deploy .bash_profile
+  ansible.builtin.copy:
+    src: bash_profile
+    dest: "{{ item.home }}/.bash_profile"
+    owner: "{{ item.name }}"
+    group: "{{ item.group | default(item.name) }}"
+    mode: "0644"
+    backup: true
+  loop: "{{ target_users }}"
+  loop_control:
+    label: "{{ item.name }}"

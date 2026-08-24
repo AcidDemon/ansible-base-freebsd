@@ -1,0 +1,11 @@
+# .bash_profile
+#
+# bash reads this for a login shell and does not read .bashrc at all, so an ssh
+# session gets none of the aliases, functions or the tmux auto-attach without
+# it. Most Linux distributions ship this glue in /etc/skel; FreeBSD's skel has
+# dot.profile for sh and no bash equivalent.
+#
+# .profile first, and explicitly: pw(8) seeds it from /usr/share/skel, and bash
+# stops reading it the moment this file exists.
+[ -f "$HOME/.profile" ] && . "$HOME/.profile"
+[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
