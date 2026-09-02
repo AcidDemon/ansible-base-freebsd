@@ -18,7 +18,11 @@ mem="$(
 )"
 
 upt="$(
-  boot=$(sysctl -n kern.boottime 2>/dev/null | sed -n 's/.*sec = \([0-9]*\).*/\1/p')
+  # Anchored, because sysctl prints "{ sec = N, usec = M }" and a leading .*
+  # is greedy: it runs past the first "sec = " and matches the one inside
+  # "usec = " instead, so this read the microseconds and every box reported an
+  # uptime counted from the epoch.
+  boot=$(sysctl -n kern.boottime 2>/dev/null | sed -n 's/^{ *sec = \([0-9]*\).*/\1/p')
   now=$(date +%s)
   if [[ -n "$boot" ]]; then s=$((now-boot)); d=$((s/86400)); s=$((s%86400)); h=$((s/3600)); m=$(((s%3600)/60));
     if [[ "$d" -gt 0 ]]; then printf "%dd %02d:%02d" "$d" "$h" "$m"; else printf "%02d:%02d" "$h" "$m"; fi
