@@ -1,0 +1,34 @@
+---
+- name: Refuse when no interface can be resolved
+  ansible.builtin.assert:
+    that: vnstat_interface | length > 0
+    fail_msg: >-
+      vnstat_interface is empty and no default IPv4 interface was detected.
+      Set vnstat_interface explicitly.
+    quiet: true
+
+- name: Install vnstat
+  community.general.pkgng:
+    name: vnstat
+    state: present
+
+# No conf file means the rc script parses no DatabaseDir and creates no db dir.
+- name: Deploy vnstat.conf
+  ansible.builtin.template:
+    src: vnstat.conf.j2
+    dest: /usr/local/etc/vnstat.conf
+    owner: root
+    group: wheel
+    mode: "0644"
+    backup: true
+  notify: Restart vnstat
+
+- name: Enable vnstat in rc.conf
+  community.general.sysrc:
+    name: vnstat_enable
+    value: "YES"
+
+- name: Ensure vnstat is running
+  ansible.builtin.service:
+    name: vnstat
+    state: started

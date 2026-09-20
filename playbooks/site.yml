@@ -47,6 +47,7 @@
     - editor
     - git
     - base_sysctl
+    - vnstat
     - zfs_be
     - base_updates
     - base_firewall

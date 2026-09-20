@@ -1,0 +1,4 @@
+---
+vnstat_interface: "{{ ansible_facts['default_ipv4']['interface'] | default('') }}"
+vnstat_db_dir: /var/db/vnstat
+vnstat_max_bandwidth: 1000
