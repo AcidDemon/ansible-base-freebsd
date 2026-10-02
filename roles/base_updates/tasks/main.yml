@@ -8,8 +8,8 @@
     mode: "0755"
   when: base_updates_enabled | bool
 
-# periodic.conf is shared. Other layers write it too (e.g. hardening's
-# daily_chkrootkit_enable), so edit per-key with sysrc rather than templating the file.
+# periodic.conf is shared. Other layers write it too, so edit per-key with sysrc
+# rather than templating the file.
 - name: Enable native periodic security reporting
   community.general.sysrc:
     name: "{{ item.name }}"
