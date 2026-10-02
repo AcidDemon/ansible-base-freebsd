@@ -9,6 +9,7 @@ firewall_service_cidrs: []
 firewall_allow_tcp_svc: []
 firewall_allow_udp_svc: []
 firewall_trust_iifnames: []        # FreeBSD NIC names: vtnet0/em0/igb0/wg0/tailscale0
+firewall_tier_iifnames: []         # bind mgmt + service tiers, e.g. [tailscale0]
 firewall_forward_policy: drop
 os_base_timezone: Etc/UTC
 admin_user: acid

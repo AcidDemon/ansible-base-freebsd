@@ -22,8 +22,15 @@ references an app, and never flushes its own tables.
 ## Firewall contract
 `management_cidrs` (admin SSH sources), `firewall_allow_tcp` (public TCP),
 `firewall_allow_tcp_mgmt` (mgmt-only TCP, default 22), `firewall_trust_iifnames`
-(trusted input ifaces, e.g. `wg0`), `firewall_forward_policy`. base owns `/etc/pf.conf`;
+(trusted input ifaces, e.g. `wg0`), `firewall_tier_iifnames` (binds the mgmt and service
+tiers to an interface, e.g. `tailscale0`), `firewall_forward_policy`. base owns `/etc/pf.conf`;
 sshguard and crowdsec own their own pf tables.
+
+Set `firewall_tier_iifnames` whenever the tier CIDRs belong to an overlay: left empty, those
+rules also match a forged source arriving on the public NIC. tailscaled does the equivalent
+itself on Linux (`! -i tailscale0 -s 100.64.0.0/10 -j DROP`) but never touches pf on FreeBSD.
+Once it is set, the lockout guard also requires the deploy session's local address to sit on
+one of those interfaces, and stops the play before `/etc/pf.conf` changes if it does not.
 
 For rules this template cannot express (`rdr`, `nat`, per-host filters), declare
 `firewall_anchors: [name]`. base emits the `nat-anchor`/`rdr-anchor`/`anchor` lines plus

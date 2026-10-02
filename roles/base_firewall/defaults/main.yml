@@ -13,6 +13,12 @@ firewall_service_cidrs: []  # noqa: var-naming[no-role-prefix]
 firewall_allow_tcp_svc: []  # noqa: var-naming[no-role-prefix]
 firewall_allow_udp_svc: []  # noqa: var-naming[no-role-prefix]
 firewall_trust_iifnames: []  # noqa: var-naming[no-role-prefix]
+# Input interfaces the management and service tiers are bound to. Empty matches
+# on source address alone, on any interface, so with tailnet CIDRs a forged
+# 100.64.x.x arriving on the public NIC passes too. On Linux tailscaled installs
+# '! -i tailscale0 -s 100.64.0.0/10 -j DROP' itself (netfilter mode, the
+# default); on FreeBSD it never touches pf, so [tailscale0] here takes its place.
+firewall_tier_iifnames: []  # noqa: var-naming[no-role-prefix]
 firewall_forward_policy: drop  # noqa: var-naming[no-role-prefix]
 # Anchors are the only way an app layer can add rules this template cannot
 # express (rdr, nat, per-host filters). base still owns pf.conf and never names

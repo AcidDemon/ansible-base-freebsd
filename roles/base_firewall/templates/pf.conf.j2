@@ -56,22 +56,23 @@ pass in proto udp to any port {{ p }} keep state
 {% endfor %}
 
 # --- management tier ---
+{% set _on = ' on { ' ~ (firewall_tier_iifnames | join(', ')) ~ ' }' if firewall_tier_iifnames | length > 0 else '' %}
 {% if management_cidrs | length > 0 %}
 {% for p in firewall_allow_tcp_mgmt %}
-pass in proto tcp from <management> to any port {{ p }} keep state
+pass in{{ _on }} proto tcp from <management> to any port {{ p }} keep state
 {% endfor %}
 {% for p in firewall_allow_udp_mgmt %}
-pass in proto udp from <management> to any port {{ p }} keep state
+pass in{{ _on }} proto udp from <management> to any port {{ p }} keep state
 {% endfor %}
 {% endif %}
 
 # --- service tier ---
 {% if firewall_service_cidrs | length > 0 %}
 {% for p in firewall_allow_tcp_svc %}
-pass in proto tcp from <services> to any port {{ p }} keep state
+pass in{{ _on }} proto tcp from <services> to any port {{ p }} keep state
 {% endfor %}
 {% for p in firewall_allow_udp_svc %}
-pass in proto udp from <services> to any port {{ p }} keep state
+pass in{{ _on }} proto udp from <services> to any port {{ p }} keep state
 {% endfor %}
 {% endif %}
 {% if firewall_anchors | length > 0 %}
