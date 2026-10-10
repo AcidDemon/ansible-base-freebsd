@@ -6,7 +6,6 @@
     owner: "{{ item.name }}"
     group: "{{ item.group | default(item.name) }}"
     mode: "0644"
-    backup: true
   loop: "{{ target_users }}"
   loop_control:
     label: "{{ item.name }}"
@@ -20,7 +19,6 @@
     owner: "{{ item.name }}"
     group: "{{ item.group | default(item.name) }}"
     mode: "0644"
-    backup: true
   loop: "{{ target_users }}"
   loop_control:
     label: "{{ item.name }}"

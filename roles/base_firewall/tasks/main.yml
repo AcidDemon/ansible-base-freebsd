@@ -94,7 +94,6 @@
     group: wheel
     mode: "0644"
     validate: "pfctl -n -f %s"
-    backup: true
   when: base_firewall_enabled | bool
   notify: Reload pf
 
