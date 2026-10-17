@@ -20,15 +20,16 @@
     - { name: security_status_pkgaudit_enable, value: "YES" }
     - { name: security_status_baseaudit_enable, value: "YES" }
     - { name: daily_status_security_inline, value: "NO" }
+    # All stock checks are daily-only. These runs just repeat the drop-ins.
+    - { name: weekly_status_security_enable, value: "NO" }
+    - { name: monthly_status_security_enable, value: "NO" }
     # periodic(8) defines exit 0 as "produced nothing notable" and is built to
     # mask it, but the default prints it anyway - so a base security check that
     # found nothing contributes a heading with no body, which reads as a check
     # that broke rather than one that passed. 999.clean-note says it in words.
     - { name: security_show_success, value: "NO" }
-    # Same for the weekly run: the locate and whatis rebuilds print their
-    # heading first and nothing after it on success. Every failure they catch
-    # exits 3, which periodic(8) cannot mask, so a failure still shows with
-    # its error under the heading.
+    # locate and whatis print a bare heading on success. Failures exit 3 and
+    # still show.
     - { name: weekly_show_success, value: "NO" }
     # Not daily_show_success: the daily run's exit-0 scripts include df -h,
     # zpool list and netstat -i, which are worth reading. Only these three

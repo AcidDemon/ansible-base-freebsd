@@ -49,11 +49,13 @@ A drop-in of your own in `/usr/local/etc/periodic/security` must therefore exit 
 has routine output worth reading, or 3 when it found something that must not be masked.
 Exit 0 means "nothing to say" and will be swallowed.
 
-The weekly run works the same way. `weekly_show_success=NO` drops the bare "Rebuilding
-locate database:" and "Rebuilding whatis database:" headings, which both scripts print
-before they start and never follow up on when they succeed. A failed rebuild exits 3 and
-still shows, with its error under the heading. The same `999.clean-note` closes the weekly
-mail, and the same exit-code rule applies to drop-ins in `/usr/local/etc/periodic/weekly`.
+The security run is daily only. Every stock check is daily-only anyway, so the weekly and
+monthly security runs just repeated the drop-ins in a second mail.
+
+The weekly run masks exit 0 too, which drops the bare "Rebuilding locate database:" and
+"Rebuilding whatis database:" headings. A failed rebuild exits 3 and still shows.
+`999.clean-note` closes the weekly mail as well, and weekly drop-ins follow the same
+exit-code rule.
 
 The daily run keeps `daily_show_success` at its default, because its exit-0 scripts print
 `df -h`, `zpool list` and `netstat -i`. Only `daily_clean_preserve_enable`,
