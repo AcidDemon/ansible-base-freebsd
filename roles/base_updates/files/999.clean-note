@@ -1,11 +1,12 @@
 #!/bin/sh
 # Managed by Ansible
 #
-# periodic.conf sets security_show_success=NO, so a check that found nothing
-# contributes no output at all. Without this line an all-clean mail cannot be
-# told apart from a run whose checks never fired. Sorting last (periodic(8)
-# orders the union of its directories by basename) puts it under everything.
+# periodic.conf sets security_show_success=NO and weekly_show_success=NO, so a
+# job that finished cleanly contributes no output at all. Without this line an
+# all-clean mail cannot be told apart from a run whose jobs never fired.
+# periodic(8) runs /usr/local/etc/periodic after /etc/periodic, and 999 sorts
+# last inside it, so this lands under everything.
 echo ""
-echo "Every enabled periodic security check not listed above ran and found nothing to report."
+echo "Every enabled periodic job not listed above ran cleanly and had nothing to report."
 # 1 = "notable information", so this line is never masked by show_success itself.
 exit 1

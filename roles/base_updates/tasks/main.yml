@@ -25,6 +25,11 @@
     # found nothing contributes a heading with no body, which reads as a check
     # that broke rather than one that passed. 999.clean-note says it in words.
     - { name: security_show_success, value: "NO" }
+    # Same for the weekly run: the locate and whatis rebuilds print their
+    # heading first and nothing after it on success. Every failure they catch
+    # exits 3, which periodic(8) cannot mask, so a failure still shows with
+    # its error under the heading.
+    - { name: weekly_show_success, value: "NO" }
     # Not daily_show_success: the daily run's exit-0 scripts include df -h,
     # zpool list and netstat -i, which are worth reading. Only these three
     # cleaners are noise - vi recovery files, msgs(1) announcements and rwhod
@@ -36,24 +41,26 @@
     label: "{{ item.name }}"
   when: base_updates_enabled | bool
 
-# Not left to a later layer: base runs first, and the drop-in below has to land
-# somewhere that already exists.
-- name: Ensure the local periodic/security dir exists
+# Not left to a later layer: base runs first, and the drop-ins below have to
+# land somewhere that already exists.
+- name: Ensure the local periodic dirs exist
   ansible.builtin.file:
-    path: /usr/local/etc/periodic/security
+    path: "/usr/local/etc/periodic/{{ item }}"
     state: directory
     owner: root
     group: wheel
     mode: "0755"
+  loop: [security, weekly]
   when: base_updates_enabled | bool
 
-- name: Deploy the periodic security footer
+- name: Deploy the periodic footers
   ansible.builtin.copy:
     src: 999.clean-note
-    dest: /usr/local/etc/periodic/security/999.clean-note
+    dest: "/usr/local/etc/periodic/{{ item }}/999.clean-note"
     owner: root
     group: wheel
     mode: "0755"
+  loop: [security, weekly]
   when: base_updates_enabled | bool
 
 - name: Schedule the unattended update run
